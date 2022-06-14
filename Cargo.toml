@@ -6,3 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+time = { version = "0.3.7", features = ["formatting"]}
+tracing = "0.1"
+tracing-core = "0.1"
+tracing-subscriber = "0.3"

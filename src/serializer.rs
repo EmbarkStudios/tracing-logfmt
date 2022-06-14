@@ -8,6 +8,12 @@ pub struct Serializer {
     pub output: String,
 }
 
+impl Default for Serializer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Serializer {
     pub fn new() -> Self {
         Serializer {

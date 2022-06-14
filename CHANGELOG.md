@@ -10,30 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
-## [0.1.1] - 2019-09-03
+## [0.1.0] - TBD
 ### Added
-- New features go here in a bullet list
-
-### Changed
-- Changes to existing functionality go here in a bullet list
-
-### Deprecated
-- Mark features soon-to-be removed in a bullet list
-
-### Removed
-- Features that have been removed in a bullet list
-
-### Fixed
-- Bug fixes in a bullet list
-
-### Security
-- Changes/fixes related to security vulnerabilities in a bullet list
-
-## [0.1.0] - 2019-09-02
-### Added
-- Initial add of the thing
+- Initial implementation of a logfmt formatter for tracing-subscriber
 
 <!-- next-url -->
-[Unreleased]: https://github.com/EmbarkStudios/$REPO_NAME/compare/0.1.1...HEAD
-[0.1.1]: https://github.com/EmbarkStudios/$REPO_NAME/compare/0.1.0...0.1.1
-[0.1.0]: https://github.com/EmbarkStudios/$REPO_NAME/releases/tag/0.1.0
+[Unreleased]: https://github.com/EmbarkStudios/tracing-subscriber-logfmt/compare/0.1.0...HEAD
+[0.1.0]: https://github.com/EmbarkStudios/tracing-subscriber-logfmt/releases/tag/0.1.0

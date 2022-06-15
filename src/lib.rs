@@ -7,7 +7,7 @@
 //! use tracing_subscriber::layer::SubscriberExt;
 //!
 //! let subscriber = Registry::default()
-//!     .with(tracing_subscriber_logfmt::layer());
+//!     .with(tracing_logfmt::layer());
 //!
 //! dispatcher::set_global_default(Dispatch::new(subscriber))
 //!     .expect("Global logger has already been set!");

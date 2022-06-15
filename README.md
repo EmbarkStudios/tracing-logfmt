@@ -14,7 +14,7 @@
 [![Embark](https://img.shields.io/badge/discord-ark-%237289da.svg?logo=discord)](https://discord.gg/dAuKfZS)
 [![Crates.io](https://img.shields.io/crates/v/tracing-logfmt.svg)](https://crates.io/crates/tracing-logfmt)
 [![Docs](https://docs.rs/tracing-logfmt/badge.svg)](https://docs.rs/tracing-logfmt)
-[![dependency status](https://deps.rs/repo/github/EmbarkStudios/tracing-logfmt/status.svg)](https://deps.rs/repo/github/EmbarkStudios/rust-gpu)
+[![dependency status](https://deps.rs/repo/github/EmbarkStudios/tracing-logfmt/status.svg)](https://deps.rs/repo/github/EmbarkStudios/tracing-logfmt)
 [![Build status](https://github.com/EmbarkStudios/tracing-logfmt/workflows/CI/badge.svg)](https://github.com/EmbarkStudios/tracing-logfmt/actions)
 </div>
 

@@ -15,5 +15,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial implementation of a logfmt formatter for tracing-subscriber
 
 <!-- next-url -->
-[Unreleased]: https://github.com/EmbarkStudios/tracing-subscriber-logfmt/compare/0.1.0...HEAD
-[0.1.0]: https://github.com/EmbarkStudios/tracing-subscriber-logfmt/releases/tag/0.1.0
+[Unreleased]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.1.0...HEAD
+[0.1.0]: https://github.com/EmbarkStudios/tracing-logfmt/releases/tag/0.1.0

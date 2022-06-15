@@ -6,16 +6,16 @@
 
 <div align="center">
 
-# `🪵️ tracing-subscriber-logfmt`
+# `🪵️ tracing-logfmt`
 
 **Logfmt formatter for tracing-subscriber**
 
 [![Embark](https://img.shields.io/badge/embark-open%20source-blueviolet.svg)](https://embark.dev)
 [![Embark](https://img.shields.io/badge/discord-ark-%237289da.svg?logo=discord)](https://discord.gg/dAuKfZS)
-[![Crates.io](https://img.shields.io/crates/v/tracing-subscriber-logfmt.svg)](https://crates.io/crates/tracing-subscriber-logfmt)
-[![Docs](https://docs.rs/tracing-subscriber-logfmt/badge.svg)](https://docs.rs/tracing-subscriber-logfmt)
-[![dependency status](https://deps.rs/repo/github/EmbarkStudios/tracing-subscriber-logfmt/status.svg)](https://deps.rs/repo/github/EmbarkStudios/rust-gpu)
-[![Build status](https://github.com/EmbarkStudios/tracing-subscriber-logfmt/workflows/CI/badge.svg)](https://github.com/EmbarkStudios/tracing-subscriber-logfmt/actions)
+[![Crates.io](https://img.shields.io/crates/v/tracing-logfmt.svg)](https://crates.io/crates/tracing-logfmt)
+[![Docs](https://docs.rs/tracing-logfmt/badge.svg)](https://docs.rs/tracing-logfmt)
+[![dependency status](https://deps.rs/repo/github/EmbarkStudios/tracing-logfmt/status.svg)](https://deps.rs/repo/github/EmbarkStudios/rust-gpu)
+[![Build status](https://github.com/EmbarkStudios/tracing-logfmt/workflows/CI/badge.svg)](https://github.com/EmbarkStudios/tracing-logfmt/actions)
 </div>
 
 ## Contribution

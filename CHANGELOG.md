@@ -10,8 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 ## [0.1.1] - 2022-06-15
-
-## [0.1.1] - 2022-06-15
 ### Fixed
 - Fix dependency status link in README.md
 

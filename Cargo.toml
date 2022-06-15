@@ -2,8 +2,13 @@
 name = "tracing-logfmt"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Embark <opensource@embark-studios.com>"]
+license = "MIT OR Apache-2.0"
+description = "A logfmt formatter for tracing events and spans"
+homepage = "https://github.com/EmbarkStudios/tracing-logfmt"
+repository = "https://github.com/EmbarkStudios/tracing-logfmt"
+keywords = ["logging", "tracing"]
+readme = "README.md"
 
 [dependencies]
 time = { version = "0.3.7", features = ["formatting"]}

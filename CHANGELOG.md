@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
-## [0.1.0] - TBD
+## [0.1.0] - 2022-06-15
 ### Added
 - Initial implementation of a logfmt formatter for tracing-subscriber
 

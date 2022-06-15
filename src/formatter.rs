@@ -1,19 +1,3 @@
-//! Formatter for logging `tracing` events in the logfmt format.
-//!
-//! This module implements traits from `tracing_subscriber` to produce logfmt formatted logs.
-//!
-//! Use as a formatting layer in tracing subscriber:
-//! ```rust
-//! use tracing::dispatcher::{self, Dispatch};
-//! use tracing_subscriber::Registry;
-//! use tracing_subscriber::layer::SubscriberExt;
-//!
-//! let subscriber = Registry::default()
-//!     .with(tracing_subscriber_logfmt::layer());
-//!
-//! dispatcher::set_global_default(Dispatch::new(subscriber))
-//!     .expect("Global logger has already been set!");
-//! ```
 use std::fmt;
 
 use tracing::field::Visit;
@@ -26,6 +10,20 @@ use tracing_subscriber::Layer;
 
 use crate::serializer::{Serializer, SerializerError};
 
+/// Creates a formatting layer
+///
+/// Example:
+/// ```rust
+/// use tracing::dispatcher::{self, Dispatch};
+/// use tracing_subscriber::Registry;
+/// use tracing_subscriber::layer::SubscriberExt;
+///
+/// let subscriber = Registry::default()
+///     .with(tracing_subscriber_logfmt::layer());
+///
+/// dispatcher::set_global_default(Dispatch::new(subscriber))
+///     .expect("Global logger has already been set!");
+/// ```
 pub fn layer<S>() -> impl Layer<S>
 where
     S: Subscriber + for<'a> LookupSpan<'a>,

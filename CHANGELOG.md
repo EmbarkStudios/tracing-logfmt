@@ -9,9 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+### Fixed
+- Remove unnecessary heap allocation ([#2](https://github.com/EmbarkStudios/tracing-logfmt/pull/2))
+
 ## [0.1.1] - 2022-06-15
 ### Fixed
-- Fix dependency status link in README.md
+- Fix dependency status link in README.md ([#1](https://github.com/EmbarkStudios/tracing-logfmt/pull/1))
 
 ## [0.1.0] - 2022-06-15
 ### Added

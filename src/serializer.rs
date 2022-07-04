@@ -1,6 +1,15 @@
+use std::fmt::Write;
+
 #[derive(Debug, PartialEq)]
 pub enum SerializerError {
     InvalidKey,
+    FmtError,
+}
+
+impl From<std::fmt::Error> for SerializerError {
+    fn from(_: std::fmt::Error) -> Self {
+        SerializerError::FmtError
+    }
 }
 
 /// Serializes key/value pairs into logfmt format.
@@ -49,7 +58,7 @@ impl Serializer {
 
     fn serialize_value(&mut self, value: &str) -> Result<(), SerializerError> {
         if value.chars().any(Self::need_quote) {
-            self.output += &format!(r#""{}""#, value.escape_debug());
+            write!(self.output, r#""{}""#, value.escape_debug())?;
         } else {
             self.output += value;
         }

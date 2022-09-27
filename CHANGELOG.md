@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+## [0.2.0] - 2022-09-27
 ### Added
 - Add fields `span` and `span_path`. `span` contains the current/leaf span name, and `span_path` contains all the nested span names. (#[4](https://github.com/EmbarkStudios/tracing-logfmt/pull/4))
 
@@ -25,7 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial implementation of a logfmt formatter for tracing-subscriber
 
 <!-- next-url -->
-[Unreleased]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.1.2...HEAD
+[Unreleased]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.2.0...HEAD
+[0.2.0]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.1.2...0.2.0
 [0.1.2]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.1.0...0.1.1
 [0.1.0]: https://github.com/EmbarkStudios/tracing-logfmt/releases/tag/0.1.0

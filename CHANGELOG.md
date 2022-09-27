@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+### Added
+- Add fields `span` and `span_path`. `span` contains the current/leaf span name, and `span_path` contains all the nested span names. (#[4](https://github.com/EmbarkStudios/tracing-logfmt/pull/4))
+
 ## [0.1.2] - 2022-07-11
 ### Fixed
 - Remove unnecessary heap allocation ([#2](https://github.com/EmbarkStudios/tracing-logfmt/pull/2))

@@ -59,6 +59,33 @@ where
             serializer.serialize_entry("level", &metadata.level().as_str().to_lowercase())?;
             serializer.serialize_entry("target", metadata.target())?;
 
+            let span = event
+                .parent()
+                .and_then(|id| ctx.span(id))
+                .or_else(|| ctx.lookup_current());
+
+            if let Some(span) = span {
+                let span_path = span.scope().from_root().map(|span| span.name()).fold(
+                    String::new(),
+                    |mut acc, name| {
+                        let add_separator = !acc.is_empty();
+
+                        if add_separator {
+                            acc.reserve(name.len() + 1);
+                            acc.push('>');
+                        } else {
+                            acc.reserve(name.len());
+                        }
+
+                        acc.push_str(name);
+                        acc
+                    },
+                );
+
+                serializer.serialize_entry("span", span.name())?;
+                serializer.serialize_entry("span_path", &span_path)?;
+            }
+
             let mut visitor = Visitor::new(&mut serializer);
             event.record(&mut visitor);
             visitor.state?;
@@ -160,5 +187,90 @@ impl<'a> Visit for Visitor<'a> {
             let val = format!("{:?}", value);
             self.record_str(field, &val);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        io,
+        sync::{Arc, Mutex},
+    };
+
+    use tracing::info_span;
+    use tracing_subscriber::fmt::{MakeWriter, SubscriberBuilder};
+
+    use super::*;
+
+    #[derive(Clone, Debug)]
+    struct MockWriter {
+        buf: Arc<Mutex<Vec<u8>>>,
+    }
+
+    #[derive(Clone, Debug)]
+    struct MockMakeWriter {
+        buf: Arc<Mutex<Vec<u8>>>,
+    }
+
+    impl MockMakeWriter {
+        fn new() -> Self {
+            Self {
+                buf: Arc::new(Mutex::new(Vec::new())),
+            }
+        }
+        fn get_content(&self) -> String {
+            let buf = self.buf.lock().unwrap();
+            std::str::from_utf8(&buf[..]).unwrap().to_owned()
+        }
+    }
+
+    impl MockWriter {
+        fn new(buf: Arc<Mutex<Vec<u8>>>) -> Self {
+            Self { buf }
+        }
+    }
+
+    impl io::Write for MockWriter {
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+            self.buf.lock().unwrap().write(buf)
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            self.buf.lock().unwrap().flush()
+        }
+    }
+
+    impl<'a> MakeWriter<'a> for MockMakeWriter {
+        type Writer = MockWriter;
+
+        fn make_writer(&'a self) -> Self::Writer {
+            MockWriter::new(self.buf.clone())
+        }
+    }
+
+    fn subscriber() -> SubscriberBuilder<FieldsFormatter, EventsFormatter> {
+        tracing_subscriber::fmt::Subscriber::builder()
+            .event_format(EventsFormatter)
+            .fmt_fields(FieldsFormatter)
+    }
+
+    #[test]
+    fn test_span_and_span_path() {
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = subscriber().with_writer(mock_writer.clone()).finish();
+
+        subscriber::with_default(subscriber, || {
+            let _root = info_span!("root").entered();
+            let _leaf = info_span!("leaf").entered();
+
+            tracing::info!("message");
+        });
+
+        let content = mock_writer.get_content();
+
+        assert!(content.contains("span=leaf"));
+        assert!(content.contains("span_path=root>leaf"));
     }
 }

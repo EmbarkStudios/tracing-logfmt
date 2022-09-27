@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - ReleaseDate
 ## [0.2.0] - 2022-09-27
 ### Added
-- Add fields `span` and `span_path`. `span` contains the current/leaf span name, and `span_path` contains all the nested span names. (#[4](https://github.com/EmbarkStudios/tracing-logfmt/pull/4))
+- Add fields `span` and `span_path`. `span` contains the current/leaf span name, and `span_path` contains all the nested span names. ([#4](https://github.com/EmbarkStudios/tracing-logfmt/pull/4))
 
 ## [0.1.2] - 2022-07-11
 ### Fixed

@@ -12,6 +12,9 @@
 //! dispatcher::set_global_default(Dispatch::new(subscriber))
 //!     .expect("Global logger has already been set!");
 //! ```
+
+#![deny(unreachable_pub)]
+
 mod formatter;
 mod serializer;
 

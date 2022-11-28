@@ -28,13 +28,27 @@ pub fn layer<S>() -> impl Layer<S>
 where
     S: Subscriber + for<'a> LookupSpan<'a>,
 {
-    tracing_subscriber::fmt::layer()
-        .event_format(EventsFormatter)
-        .fmt_fields(FieldsFormatter)
+    crate::builder().build()
 }
 
 /// A formatter that formats tracing-subscriber events into logfmt formatted log rows.
-pub struct EventsFormatter;
+pub struct EventsFormatter {
+    pub(crate) with_level: bool,
+    pub(crate) with_target: bool,
+    pub(crate) with_span_name: bool,
+    pub(crate) with_span_path: bool,
+}
+
+impl Default for EventsFormatter {
+    fn default() -> Self {
+        Self {
+            with_level: true,
+            with_target: true,
+            with_span_name: true,
+            with_span_path: true,
+        }
+    }
+}
 
 impl<S, N> FormatEvent<S, N> for EventsFormatter
 where
@@ -61,63 +75,76 @@ where
                 )
                 .map_err(|_e| fmt::Error)?;
 
-            let level = match *metadata.level() {
-                tracing::Level::ERROR => "error",
-                tracing::Level::WARN => "warn",
-                tracing::Level::INFO => "info",
-                tracing::Level::DEBUG => "debug",
-                tracing::Level::TRACE => "trace",
-            };
-            serializer.serialize_entry("level", level)?;
-            serializer.serialize_entry("target", metadata.target())?;
+            if self.with_level {
+                let level = match *metadata.level() {
+                    tracing::Level::ERROR => "error",
+                    tracing::Level::WARN => "warn",
+                    tracing::Level::INFO => "info",
+                    tracing::Level::DEBUG => "debug",
+                    tracing::Level::TRACE => "trace",
+                };
+                serializer.serialize_entry("level", level)?;
+            }
 
-            let span = event
-                .parent()
-                .and_then(|id| ctx.span(id))
-                .or_else(|| ctx.lookup_current());
+            if self.with_target {
+                serializer.serialize_entry("target", metadata.target())?;
+            }
+
+            let span = if self.with_span_name || self.with_span_path {
+                event
+                    .parent()
+                    .and_then(|id| ctx.span(id))
+                    .or_else(|| ctx.lookup_current())
+            } else {
+                None
+            };
 
             if let Some(span) = span {
-                serializer.serialize_entry("span", span.name())?;
+                if self.with_span_name {
+                    serializer.serialize_entry("span", span.name())?;
+                }
 
-                serializer.serialize_key("span_path")?;
-                serializer.writer.write_char('=')?;
+                if self.with_span_path {
+                    serializer.serialize_key("span_path")?;
+                    serializer.writer.write_char('=')?;
 
-                let needs_quote = span
-                    .scope()
-                    .from_root()
-                    .any(|span| span.name().chars().any(crate::serializer::need_quote));
+                    let needs_quote = span
+                        .scope()
+                        .from_root()
+                        .any(|span| span.name().chars().any(crate::serializer::need_quote));
 
-                // if none of the span names need to be quoted we can do things a bit faster
-                if needs_quote {
-                    let mut required_capacity = 0;
-                    let mut insert_sep = false;
-                    for span in span.scope().from_root() {
-                        if insert_sep {
-                            required_capacity += 1;
+                    // if none of the span names need to be quoted we can do things a bit faster
+                    if needs_quote {
+                        let mut required_capacity = 0;
+                        let mut insert_sep = false;
+                        for span in span.scope().from_root() {
+                            if insert_sep {
+                                required_capacity += 1;
+                            }
+                            required_capacity += span.name().len();
+                            insert_sep = true;
                         }
-                        required_capacity += span.name().len();
-                        insert_sep = true;
-                    }
 
-                    let mut span_path = String::with_capacity(required_capacity);
-                    let s = Serializer::new(&mut span_path);
-                    let mut insert_sep = false;
-                    for span in span.scope().from_root() {
-                        if insert_sep {
-                            s.writer.write_char('>')?;
+                        let mut span_path = String::with_capacity(required_capacity);
+                        let s = Serializer::new(&mut span_path);
+                        let mut insert_sep = false;
+                        for span in span.scope().from_root() {
+                            if insert_sep {
+                                s.writer.write_char('>')?;
+                            }
+                            s.writer.write_str(span.name())?;
+                            insert_sep = true;
                         }
-                        s.writer.write_str(span.name())?;
-                        insert_sep = true;
-                    }
-                    serializer.serialize_value(&span_path)?;
-                } else {
-                    let mut insert_sep = false;
-                    for span in span.scope().from_root() {
-                        if insert_sep {
-                            serializer.writer.write_char('>')?;
+                        serializer.serialize_value(&span_path)?;
+                    } else {
+                        let mut insert_sep = false;
+                        for span in span.scope().from_root() {
+                            if insert_sep {
+                                serializer.writer.write_char('>')?;
+                            }
+                            serializer.writer.write_str(span.name())?;
+                            insert_sep = true;
                         }
-                        serializer.writer.write_str(span.name())?;
-                        insert_sep = true;
                     }
                 }
             }
@@ -151,7 +178,8 @@ where
 }
 
 /// A formatter that formats span fields into logfmt.
-pub struct FieldsFormatter;
+#[derive(Default)]
+pub struct FieldsFormatter {}
 
 impl<'writer> FormatFields<'writer> for FieldsFormatter {
     fn format_fields<R: RecordFields>(
@@ -306,8 +334,8 @@ mod tests {
 
     fn subscriber() -> SubscriberBuilder<FieldsFormatter, EventsFormatter> {
         tracing_subscriber::fmt::Subscriber::builder()
-            .event_format(EventsFormatter)
-            .fmt_fields(FieldsFormatter)
+            .event_format(EventsFormatter::default())
+            .fmt_fields(FieldsFormatter::default())
     }
 
     #[test]

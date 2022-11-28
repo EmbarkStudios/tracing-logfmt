@@ -15,7 +15,9 @@
 
 #![deny(unreachable_pub)]
 
+mod builder;
 mod formatter;
 mod serializer;
 
+pub use crate::builder::builder;
 pub use crate::formatter::{layer, EventsFormatter, FieldsFormatter};

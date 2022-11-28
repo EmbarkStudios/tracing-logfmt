@@ -1,5 +1,5 @@
 use tracing::Subscriber;
-use tracing_subscriber::{registry::LookupSpan, Layer};
+use tracing_subscriber::{fmt::SubscriberBuilder, registry::LookupSpan, Layer};
 
 use crate::{EventsFormatter, FieldsFormatter};
 
@@ -37,11 +37,17 @@ impl Builder {
         self
     }
 
-    pub fn build<S>(self) -> impl Layer<S>
+    pub fn layer<S>(self) -> impl Layer<S>
     where
         S: Subscriber + for<'a> LookupSpan<'a>,
     {
         tracing_subscriber::fmt::layer()
+            .event_format(self.events)
+            .fmt_fields(self.fields)
+    }
+
+    pub fn subscriber_builder(self) -> SubscriberBuilder<FieldsFormatter, EventsFormatter> {
+        tracing_subscriber::fmt::Subscriber::builder()
             .event_format(self.events)
             .fmt_fields(self.fields)
     }

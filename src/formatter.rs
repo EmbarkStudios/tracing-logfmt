@@ -30,7 +30,7 @@ pub fn layer<S>() -> impl Layer<S>
 where
     S: Subscriber + for<'a> LookupSpan<'a>,
 {
-    crate::builder().build()
+    crate::builder().layer()
 }
 
 /// A formatter that formats tracing-subscriber events into logfmt formatted log rows.
@@ -335,9 +335,7 @@ mod tests {
     }
 
     fn subscriber() -> SubscriberBuilder<FieldsFormatter, EventsFormatter> {
-        tracing_subscriber::fmt::Subscriber::builder()
-            .event_format(EventsFormatter::default())
-            .fmt_fields(FieldsFormatter::default())
+        builder::builder().subscriber_builder()
     }
 
     #[test]
@@ -386,6 +384,35 @@ mod tests {
         assert!(content.contains("span=bottom"));
         assert!(content.contains("span_path=top>middle>bottom"));
         assert!(content.contains("info"));
+        assert!(content.contains("ts=20"));
+    }
+
+    #[test]
+    fn test_disable_span_and_span_path() {
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = builder::builder()
+            .with_span_name(false)
+            .with_span_path(false)
+            .subscriber_builder()
+            .with_writer(mock_writer.clone())
+            .finish();
+
+        subscriber::with_default(subscriber, || {
+            let _top = info_span!("top").entered();
+            let _middle = info_span!("middle").entered();
+            let _bottom = info_span!("bottom").entered();
+
+            tracing::info!("message");
+        });
+
+        let content = mock_writer.get_content();
+
+        println!("{:?}", content);
+        assert!(!content.contains("span="));
+        assert!(!content.contains("span_path="));
+        assert!(content.contains("level=info"));
         assert!(content.contains("ts=20"));
     }
 }

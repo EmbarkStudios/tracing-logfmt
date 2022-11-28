@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+## [0.3.0] - 2022-11-28
 ### Added
 - Make extra fields configurable ([#8](https://github.com/EmbarkStudios/tracing-logfmt/pull/8)) **This is a breaking change**, as it changes `EventsFormatter` and `FieldsFormatter` from beeing unit-like structs to regular structs.
 
@@ -32,7 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial implementation of a logfmt formatter for tracing-subscriber
 
 <!-- next-url -->
-[Unreleased]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.2.0...HEAD
+[Unreleased]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.3.0...HEAD
+[0.3.0]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.1.2...0.2.0
 [0.1.2]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.1.0...0.1.1

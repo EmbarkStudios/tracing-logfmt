@@ -1,7 +1,7 @@
-use std::fmt::Write;
+use std::fmt;
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum SerializerError {
+pub(crate) enum SerializerError {
     InvalidKey,
     FmtError,
 }
@@ -13,61 +13,114 @@ impl From<std::fmt::Error> for SerializerError {
 }
 
 /// Serializes key/value pairs into logfmt format.
-pub struct Serializer {
-    pub output: String,
+pub(crate) struct Serializer<W> {
+    pub(crate) writer: W,
+    writing_first_entry: bool,
 }
 
-impl Default for Serializer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Serializer {
-    pub fn new() -> Self {
+impl<W> Serializer<W>
+where
+    W: fmt::Write,
+{
+    #[inline]
+    pub(crate) fn new(writer: W) -> Self {
         Serializer {
-            output: String::new(),
+            writer,
+            writing_first_entry: true,
         }
     }
 
-    pub fn serialize_entry(&mut self, key: &str, value: &str) -> Result<(), SerializerError> {
-        if !self.output.is_empty() {
-            self.output += " ";
-        }
+    pub(crate) fn serialize_entry(
+        &mut self,
+        key: &str,
+        value: &str,
+    ) -> Result<(), SerializerError> {
+        self.serialize_entry_with(key, value, |this, value| this.serialize_value(value))
+    }
 
+    pub(crate) fn serialize_entry_no_quote(
+        &mut self,
+        key: &str,
+        value: impl fmt::Debug,
+    ) -> Result<(), SerializerError> {
+        self.serialize_entry_with(key, value, |this, value| {
+            this.serialize_value_no_quote(value)
+        })
+    }
+
+    fn serialize_entry_with<F, T>(
+        &mut self,
+        key: &str,
+        value: T,
+        serialize_value: F,
+    ) -> Result<(), SerializerError>
+    where
+        F: FnOnce(&mut Self, T) -> Result<(), SerializerError>,
+    {
         self.serialize_key(key)?;
-        self.output += "=";
-        self.serialize_value(value)?;
+        self.writer.write_char('=')?;
+        serialize_value(self, value)?;
 
         Ok(())
     }
 
-    fn serialize_key(&mut self, key: &str) -> Result<(), SerializerError> {
-        let key: &str = &key
-            .chars()
-            .filter(|&ch| !Self::need_quote(ch))
-            .collect::<String>();
+    pub(crate) fn serialize_key(&mut self, key: &str) -> Result<(), SerializerError> {
+        if !self.writing_first_entry {
+            self.writer.write_char(' ')?;
+        }
+        self.writing_first_entry = false;
 
-        if key.is_empty() {
+        let mut chars = key.chars().filter(|&ch| !need_quote(ch)).peekable();
+
+        if chars.peek().is_none() {
             return Err(SerializerError::InvalidKey);
         }
 
-        self.output += key;
-        Ok(())
-    }
-
-    fn serialize_value(&mut self, value: &str) -> Result<(), SerializerError> {
-        if value.chars().any(Self::need_quote) {
-            write!(self.output, r#""{}""#, value.escape_debug())?;
-        } else {
-            self.output += value;
+        for c in chars {
+            self.writer.write_char(c)?;
         }
 
         Ok(())
     }
 
-    fn need_quote(ch: char) -> bool {
-        ch <= ' ' || matches!(ch, '=' | '"')
+    pub(crate) fn serialize_value(&mut self, value: &str) -> Result<(), SerializerError> {
+        if value.chars().any(need_quote) {
+            self.writer.write_char('"')?;
+            write!(self.writer, "{}", value.escape_debug())?;
+            self.writer.write_char('"')?;
+        } else {
+            self.writer.write_str(value)?;
+        }
+
+        Ok(())
+    }
+
+    fn serialize_value_no_quote(&mut self, value: impl fmt::Debug) -> Result<(), SerializerError> {
+        write!(self.writer, "{:?}", value)?;
+        Ok(())
+    }
+}
+
+#[inline]
+pub(crate) fn need_quote(ch: char) -> bool {
+    ch <= ' ' || matches!(ch, '=' | '"')
+}
+
+impl<W> std::io::Write for Serializer<W>
+where
+    W: fmt::Write,
+{
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        if let Ok(buf) = std::str::from_utf8(buf) {
+            self.writer
+                .write_str(buf)
+                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
     }
 }
 
@@ -77,11 +130,12 @@ mod tests {
 
     #[test]
     fn test_serialize_entries() {
-        let mut s = Serializer::new();
+        let mut output = String::new();
+        let mut s = Serializer::new(&mut output);
         assert!(s.serialize_entry("key", "value").is_ok());
         assert!(s.serialize_entry("key2", "value2").is_ok());
 
-        assert_eq!(s.output, "key=value key2=value2");
+        assert_eq!(output, "key=value key2=value2");
     }
 
     #[test]
@@ -95,9 +149,10 @@ mod tests {
         ];
 
         for ((k, v), expected_output) in tests {
-            let mut s = Serializer::new();
+            let mut output = String::new();
+            let mut s = Serializer::new(&mut output);
             assert!(s.serialize_entry(k, v).is_ok());
-            assert_eq!(s.output, expected_output,);
+            assert_eq!(output, expected_output,);
         }
     }
 
@@ -111,10 +166,12 @@ mod tests {
             ("k\ney", "key"),
         ];
         for (input, expected_output) in tests {
-            let mut s = Serializer::new();
+            let mut output = String::new();
+
+            let mut s = Serializer::new(&mut output);
             assert!(s.serialize_key(input).is_ok());
 
-            assert_eq!(s.output, expected_output);
+            assert_eq!(output, expected_output);
         }
     }
 
@@ -128,7 +185,8 @@ mod tests {
         ];
 
         for (input, expected_error) in tests {
-            let mut s = Serializer::new();
+            let mut output = String::new();
+            let mut s = Serializer::new(&mut output);
             assert_eq!(s.serialize_key(input), Err(expected_error));
         }
     }
@@ -152,10 +210,11 @@ mod tests {
         ];
 
         for (input, expected_output) in tests {
-            let mut s = Serializer::new();
+            let mut output = String::new();
+            let mut s = Serializer::new(&mut output);
             assert!(s.serialize_value(input).is_ok());
 
-            assert_eq!(s.output, expected_output);
+            assert_eq!(output, expected_output);
         }
     }
 }

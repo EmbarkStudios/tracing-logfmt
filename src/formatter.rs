@@ -181,6 +181,7 @@ where
 
 /// A formatter that formats span fields into logfmt.
 #[derive(Default)]
+#[non_exhaustive]
 pub struct FieldsFormatter {}
 
 impl<'writer> FormatFields<'writer> for FieldsFormatter {

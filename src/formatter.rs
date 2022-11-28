@@ -68,7 +68,7 @@ where
                 tracing::Level::DEBUG => "debug",
                 tracing::Level::TRACE => "trace",
             };
-            serializer.serialize_entry("target", level)?;
+            serializer.serialize_entry("level", level)?;
             serializer.serialize_entry("target", metadata.target())?;
 
             let span = event

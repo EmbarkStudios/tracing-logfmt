@@ -1,3 +1,5 @@
+pub(crate) mod builder;
+
 use std::fmt::{self, Write};
 
 use tracing::field::Visit;

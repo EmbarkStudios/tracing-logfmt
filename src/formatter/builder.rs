@@ -4,8 +4,8 @@ use tracing_subscriber::{registry::LookupSpan, Layer};
 use crate::{EventsFormatter, FieldsFormatter};
 
 pub struct Builder {
-    pub(crate) events: EventsFormatter,
-    pub(crate) fields: FieldsFormatter,
+    events: EventsFormatter,
+    fields: FieldsFormatter,
 }
 
 pub fn builder() -> Builder {

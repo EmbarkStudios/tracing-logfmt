@@ -83,7 +83,7 @@ where
         Ok(())
     }
 
-    fn serialize_value(&mut self, value: &str) -> Result<(), SerializerError> {
+    pub(crate) fn serialize_value(&mut self, value: &str) -> Result<(), SerializerError> {
         if value.chars().any(need_quote) {
             self.writer.write_char('"')?;
             write!(self.writer, "{}", value.escape_debug())?;

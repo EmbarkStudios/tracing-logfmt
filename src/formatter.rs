@@ -86,7 +86,7 @@ where
                     if insert_sep {
                         serializer.writer.write_char('>')?;
                     }
-                    serializer.writer.write_str(name)?;
+                    serializer.serialize_value(name)?;
                     insert_sep = true;
                 }
             }
@@ -288,7 +288,7 @@ mod tests {
 
         subscriber::with_default(subscriber, || {
             let _top = info_span!("top").entered();
-            let _middle = info_span!("middle").entered();
+            let _middle = info_span!("middle=").entered();
             let _bottom = info_span!("bottom").entered();
 
             tracing::info!("message");
@@ -298,7 +298,7 @@ mod tests {
 
         println!("{:?}", content);
         assert!(content.contains("span=bottom"));
-        assert!(content.contains("span_path=top>middle>bottom"));
+        assert!(content.contains("span_path=top>\"middle=\">bottom"));
         assert!(content.contains("info"));
         assert!(content.contains("ts=20"));
     }

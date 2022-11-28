@@ -18,6 +18,16 @@
 [![Build status](https://github.com/EmbarkStudios/tracing-logfmt/workflows/CI/badge.svg)](https://github.com/EmbarkStudios/tracing-logfmt/actions)
 </div>
 
+## Logfmt
+
+Logfmt is a compact and simple log format for structured logging. Each log row contains one level of key/value pairs. To keep it as compact and readable as possible, values are only quoted if needed.
+
+```logfmt
+key=value otherkey="value with spaces" third="with escaped \"chars\""
+```
+
+There is no strict standard for the format, but it was first documented in [this article](https://brandur.org/logfmt) by Brandur Leach.
+
 ## Contribution
 
 [![Contributor Covenant](https://img.shields.io/badge/contributor%20covenant-v1.4-ff69b4.svg)](CODE_OF_CONDUCT.md)

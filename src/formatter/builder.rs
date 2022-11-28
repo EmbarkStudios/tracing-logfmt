@@ -8,6 +8,20 @@ pub struct Builder {
     fields: FieldsFormatter,
 }
 
+/// Create a builder that can be used to configure the formatter.
+///
+/// Example:
+/// ```rust
+/// use tracing::dispatcher::{self, Dispatch};
+/// use tracing_subscriber::Registry;
+/// use tracing_subscriber::layer::SubscriberExt;
+///
+/// let subscriber = Registry::default()
+///     .with(tracing_logfmt::builder().with_span_path(false).layer());
+///
+/// dispatcher::set_global_default(Dispatch::new(subscriber))
+///     .expect("Global logger has already been set!");
+/// ```
 pub fn builder() -> Builder {
     Builder::new()
 }

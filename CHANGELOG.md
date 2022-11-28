@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+### Added
+- Make extra fields configurable ([#8](https://github.com/EmbarkStudios/tracing-logfmt/pull/8)) **This is a breaking change**, as it changes `EventsFormatter` and `FieldsFormatter` from beeing unit-like structs to regular structs.
+
+### Changed
+- Improve performance and reduce allocations ([#5](https://github.com/EmbarkStudios/tracing-logfmt/pull/5))
+
 ## [0.2.0] - 2022-09-27
 ### Added
 - Add fields `span` and `span_path`. `span` contains the current/leaf span name, and `span_path` contains all the nested span names. ([#4](https://github.com/EmbarkStudios/tracing-logfmt/pull/4))

@@ -78,16 +78,47 @@ where
 
             if let Some(span) = span {
                 serializer.serialize_entry("span", span.name())?;
+
                 serializer.serialize_key("span_path")?;
                 serializer.writer.write_char('=')?;
-                let mut insert_sep = false;
-                for span in span.scope().from_root() {
-                    let name = span.name();
-                    if insert_sep {
-                        serializer.writer.write_char('>')?;
+
+                let needs_quote = span
+                    .scope()
+                    .from_root()
+                    .any(|span| span.name().chars().any(crate::serializer::need_quote));
+
+                // if none of the span names need to be quoted we can do things a bit faster
+                if needs_quote {
+                    let mut required_capacity = 0;
+                    let mut insert_sep = false;
+                    for span in span.scope().from_root() {
+                        if insert_sep {
+                            required_capacity += 1;
+                        }
+                        required_capacity += span.name().len();
+                        insert_sep = true;
                     }
-                    serializer.serialize_value(name)?;
-                    insert_sep = true;
+
+                    let mut span_path = String::with_capacity(required_capacity);
+                    let s = Serializer::new(&mut span_path);
+                    let mut insert_sep = false;
+                    for span in span.scope().from_root() {
+                        if insert_sep {
+                            s.writer.write_char('>')?;
+                        }
+                        s.writer.write_str(span.name())?;
+                        insert_sep = true;
+                    }
+                    serializer.serialize_value(&span_path)?;
+                } else {
+                    let mut insert_sep = false;
+                    for span in span.scope().from_root() {
+                        if insert_sep {
+                            serializer.writer.write_char('>')?;
+                        }
+                        serializer.writer.write_str(span.name())?;
+                        insert_sep = true;
+                    }
                 }
             }
 
@@ -280,7 +311,7 @@ mod tests {
     }
 
     #[test]
-    fn test_span_and_span_path() {
+    fn test_span_and_span_path_with_quoting() {
         use tracing::subscriber;
 
         let mock_writer = MockMakeWriter::new();
@@ -288,7 +319,8 @@ mod tests {
 
         subscriber::with_default(subscriber, || {
             let _top = info_span!("top").entered();
-            let _middle = info_span!("middle=").entered();
+            // the ' ' requires quoting
+            let _middle = info_span!("mid dle").entered();
             let _bottom = info_span!("bottom").entered();
 
             tracing::info!("message");
@@ -298,7 +330,31 @@ mod tests {
 
         println!("{:?}", content);
         assert!(content.contains("span=bottom"));
-        assert!(content.contains("span_path=top>\"middle=\">bottom"));
+        assert!(content.contains("span_path=\"top>mid dle>bottom\""));
+        assert!(content.contains("info"));
+        assert!(content.contains("ts=20"));
+    }
+
+    #[test]
+    fn test_span_and_span_path_without_quoting() {
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = subscriber().with_writer(mock_writer.clone()).finish();
+
+        subscriber::with_default(subscriber, || {
+            let _top = info_span!("top").entered();
+            let _middle = info_span!("middle").entered();
+            let _bottom = info_span!("bottom").entered();
+
+            tracing::info!("message");
+        });
+
+        let content = mock_writer.get_content();
+
+        println!("{:?}", content);
+        assert!(content.contains("span=bottom"));
+        assert!(content.contains("span_path=top>middle>bottom"));
         assert!(content.contains("info"));
         assert!(content.contains("ts=20"));
     }

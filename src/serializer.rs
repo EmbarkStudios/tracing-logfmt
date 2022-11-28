@@ -102,7 +102,7 @@ where
 }
 
 #[inline]
-fn need_quote(ch: char) -> bool {
+pub(crate) fn need_quote(ch: char) -> bool {
     ch <= ' ' || matches!(ch, '=' | '"')
 }
 

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+## [0.3.1] - 2023-03-13
 ### Changed
 - `Builder::layer` now returns the concrete `tracing_subscriber::fmt::Layer` instead of a `impl Layer`. So that the methods from that type can be accessed.
 
@@ -36,7 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial implementation of a logfmt formatter for tracing-subscriber
 
 <!-- next-url -->
-[Unreleased]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.3.0...HEAD
+[Unreleased]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.3.1...HEAD
+[0.3.1]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.1.2...0.2.0
 [0.1.2]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.1.1...0.1.2

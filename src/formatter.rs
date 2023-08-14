@@ -77,6 +77,7 @@ where
                 )
                 .map_err(|_e| fmt::Error)?;
 
+            #[cfg(not(feature = "ansi_logs"))]
             if self.with_level {
                 let level = match *metadata.level() {
                     tracing::Level::ERROR => "error",
@@ -86,6 +87,32 @@ where
                     tracing::Level::TRACE => "trace",
                 };
                 serializer.serialize_entry("level", level)?;
+            }
+
+            #[cfg(feature = "ansi_logs")]
+            {
+                let level = match *metadata.level() {
+                    tracing::Level::ERROR => "error",
+                    tracing::Level::WARN => "warn",
+                    tracing::Level::INFO => "info",
+                    tracing::Level::DEBUG => "debug",
+                    tracing::Level::TRACE => "trace",
+                };
+
+                if self.with_level {
+                    let level_str = match level {
+                        "error" => nu_ansi_term::Color::Red,
+                        "warn" => nu_ansi_term::Color::Yellow,
+                        "info" => nu_ansi_term::Color::Green,
+                        "debug" => nu_ansi_term::Color::Blue,
+                        "trace" => nu_ansi_term::Color::Purple,
+                        _ => todo!("Level not supported"),
+                    }
+                    .bold()
+                    .paint(level);
+
+                    serializer.serialize_entry("level", &level_str.to_string())?;
+                }
             }
 
             if self.with_target {
@@ -340,6 +367,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "ansi_logs"))]
     fn test_span_and_span_path_with_quoting() {
         use tracing::subscriber;
 
@@ -365,6 +393,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "ansi_logs"))]
     fn test_span_and_span_path_without_quoting() {
         use tracing::subscriber;
 
@@ -389,6 +418,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "ansi_logs"))]
     fn test_disable_span_and_span_path() {
         use tracing::subscriber;
 
@@ -415,5 +445,107 @@ mod tests {
         assert!(!content.contains("span_path="));
         assert!(content.contains("level=info"));
         assert!(content.contains("ts=20"));
+    }
+
+    #[test]
+    #[cfg(feature = "ansi_logs")]
+    fn test_span_and_span_path_with_quoting() {
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = subscriber().with_writer(mock_writer.clone()).finish();
+
+        subscriber::with_default(subscriber, || {
+            let _top = info_span!("top").entered();
+            // the ' ' requires quoting
+            let _middle = info_span!("mid dle").entered();
+            let _bottom = info_span!("bottom").entered();
+
+            tracing::info!("message");
+        });
+
+        let content = mock_writer.get_content();
+
+        let span = make_ansi_key_value("span", "=bottom");
+        let span_path = make_ansi_key_value("span_path", "=\"top>mid dle>bottom\"");
+        let ts = make_ansi_key_value("ts", "=20");
+
+        println!("{:?}", content);
+        assert!(content.contains(&span));
+        assert!(content.contains(&span_path));
+        assert!(content.contains("info"));
+        assert!(content.contains(&ts));
+    }
+    #[test]
+    #[cfg(feature = "ansi_logs")]
+    fn test_span_and_span_path_without_quoting() {
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = subscriber().with_writer(mock_writer.clone()).finish();
+
+        subscriber::with_default(subscriber, || {
+            let _top = info_span!("top").entered();
+            let _middle = info_span!("middle").entered();
+            let _bottom = info_span!("bottom").entered();
+
+            tracing::info!("message");
+        });
+
+        let content = mock_writer.get_content();
+
+        let span = make_ansi_key_value("span", "=bottom");
+        let span_path = make_ansi_key_value("span_path", "=top>middle>bottom");
+        let ts = make_ansi_key_value("ts", "=20");
+
+        println!("{}", content);
+        assert!(content.contains(&span));
+        assert!(content.contains(&span_path));
+        assert!(content.contains("info"));
+        assert!(content.contains(&ts));
+    }
+
+    #[test]
+    #[cfg(feature = "ansi_logs")]
+    fn test_disable_span_and_span_path() {
+        use nu_ansi_term::Color;
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = builder::builder()
+            .with_span_name(false)
+            .with_span_path(false)
+            .subscriber_builder()
+            .with_writer(mock_writer.clone())
+            .finish();
+
+        subscriber::with_default(subscriber, || {
+            let _top = info_span!("top").entered();
+            let _middle = info_span!("middle").entered();
+            let _bottom = info_span!("bottom").entered();
+
+            tracing::info!("message");
+        });
+
+        let content = mock_writer.get_content();
+        let message = make_ansi_key_value("message", "=message");
+        let target = make_ansi_key_value("target", "=tracing_logfmt::formatter::tests");
+        let ts = make_ansi_key_value("ts", "=");
+
+        println!("{}", content);
+        assert!(!content.contains("span="));
+        assert!(!content.contains("span_path="));
+        assert!(content.contains(&Color::Green.bold().paint("info").to_string()));
+        assert!(content.contains(&ts));
+        assert!(content.contains(&target));
+        assert!(content.contains(&message));
+    }
+
+    #[cfg(feature = "ansi_logs")]
+    fn make_ansi_key_value(key: &str, value: &str) -> String {
+        use nu_ansi_term::Color;
+        let mut key = Color::Rgb(109, 139, 140).bold().paint(key).to_string();
+        key.push_str(value);
+        return key;
     }
 }

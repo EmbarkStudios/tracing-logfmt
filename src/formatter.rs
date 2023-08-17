@@ -77,7 +77,6 @@ where
                 )
                 .map_err(|_e| fmt::Error)?;
 
-            #[cfg(not(feature = "ansi_logs"))]
             if self.with_level {
                 let level = match *metadata.level() {
                     tracing::Level::ERROR => "error",
@@ -86,33 +85,24 @@ where
                     tracing::Level::DEBUG => "debug",
                     tracing::Level::TRACE => "trace",
                 };
-                serializer.serialize_entry("level", level)?;
-            }
 
-            #[cfg(feature = "ansi_logs")]
-            {
-                let level = match *metadata.level() {
-                    tracing::Level::ERROR => "error",
-                    tracing::Level::WARN => "warn",
-                    tracing::Level::INFO => "info",
-                    tracing::Level::DEBUG => "debug",
-                    tracing::Level::TRACE => "trace",
-                };
-
-                if self.with_level {
-                    let level_str = match level {
-                        "error" => nu_ansi_term::Color::Red,
-                        "warn" => nu_ansi_term::Color::Yellow,
-                        "info" => nu_ansi_term::Color::Green,
-                        "debug" => nu_ansi_term::Color::Blue,
-                        "trace" => nu_ansi_term::Color::Purple,
-                        _ => todo!("Level not supported"),
+                #[cfg(feature = "ansi_logs")]
+                {
+                    let level_str = match *metadata.level() {
+                        tracing::Level::ERROR => nu_ansi_term::Color::Red,
+                        tracing::Level::WARN => nu_ansi_term::Color::Yellow,
+                        tracing::Level::INFO => nu_ansi_term::Color::Green,
+                        tracing::Level::DEBUG => nu_ansi_term::Color::Blue,
+                        tracing::Level::TRACE => nu_ansi_term::Color::Purple,
                     }
                     .bold()
                     .paint(level);
 
                     serializer.serialize_entry("level", &level_str.to_string())?;
                 }
+
+                #[cfg(not(feature = "ansi_logs"))]
+                serializer.serialize_entry("level", level)?;
             }
 
             if self.with_target {

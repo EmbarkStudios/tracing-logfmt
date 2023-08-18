@@ -100,7 +100,7 @@ where
         {
             let mut s = String::new();
             for c in chars {
-                s.push(c)
+                s.push(c);
             }
             self.writer.write_str(
                 &nu_ansi_term::Color::Rgb(109, 139, 140)
@@ -226,7 +226,7 @@ mod tests {
                 .paint(key)
                 .to_string();
             key.push_str(value);
-            return key;
+            key
         }
     }
 

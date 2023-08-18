@@ -536,6 +536,6 @@ mod tests {
         use nu_ansi_term::Color;
         let mut key = Color::Rgb(109, 139, 140).bold().paint(key).to_string();
         key.push_str(value);
-        return key;
+        key
     }
 }

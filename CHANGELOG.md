@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+### Added
+- Added feature `ansi_logs` that when enabled will colorize the output ([#11](https://github.com/EmbarkStudios/tracing-logfmt/pull/11))
+
 ## [0.3.2] - 2023-04-24
 ### Fixed
 - Make `Builder` public ([#10](https://github.com/EmbarkStudios/tracing-logfmt/pull/10))

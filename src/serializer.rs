@@ -30,12 +30,26 @@ where
         }
     }
 
+    #[cfg(not(feature = "ansi_logs"))]
     pub(crate) fn serialize_entry(
         &mut self,
         key: &str,
         value: &str,
     ) -> Result<(), SerializerError> {
         self.serialize_entry_with(key, value, |this, value| this.serialize_value(value))
+    }
+
+    #[cfg(feature = "ansi_logs")]
+    pub(crate) fn serialize_entry(
+        &mut self,
+        key: &str,
+        value: &str,
+    ) -> Result<(), SerializerError> {
+        if let "level" = key {
+            self.serialize_entry_with(key, value, |this, value| this.serialize_level(value))
+        } else {
+            self.serialize_entry_with(key, value, |this, value| this.serialize_value(value))
+        }
     }
 
     pub(crate) fn serialize_entry_no_quote(
@@ -63,7 +77,6 @@ where
 
         Ok(())
     }
-
     pub(crate) fn serialize_key(&mut self, key: &str) -> Result<(), SerializerError> {
         if !self.writing_first_entry {
             self.writer.write_char(' ')?;
@@ -76,10 +89,26 @@ where
             return Err(SerializerError::InvalidKey);
         }
 
-        for c in chars {
-            self.writer.write_char(c)?;
+        #[cfg(not(feature = "ansi_logs"))]
+        {
+            for c in chars {
+                self.writer.write_char(c)?;
+            }
         }
 
+        #[cfg(feature = "ansi_logs")]
+        {
+            let mut s = String::new();
+            for c in chars {
+                s.push(c);
+            }
+            self.writer.write_str(
+                &nu_ansi_term::Color::Rgb(109, 139, 140)
+                    .bold()
+                    .paint(s)
+                    .to_string(),
+            )?;
+        }
         Ok(())
     }
 
@@ -97,6 +126,12 @@ where
 
     fn serialize_value_no_quote(&mut self, value: impl fmt::Debug) -> Result<(), SerializerError> {
         write!(self.writer, "{:?}", value)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "ansi_logs")]
+    fn serialize_level(&mut self, value: &str) -> Result<(), SerializerError> {
+        write!(self.writer, "{}", value)?;
         Ok(())
     }
 }
@@ -129,6 +164,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(not(feature = "ansi_logs"))]
     fn test_serialize_entries() {
         let mut output = String::new();
         let mut s = Serializer::new(&mut output);
@@ -139,6 +175,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "ansi_logs"))]
     fn test_serialize_entry() {
         let tests = vec![
             (("key", "value"), "key=value"),
@@ -157,6 +194,44 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ansi_logs")]
+    fn test_serialize_entry() {
+        let tests = vec![
+            (("key", "value"), make_ansi_key_value("key", "=value")),
+            (
+                ("ke=y", "value="),
+                make_ansi_key_value("key", "=\"value=\""),
+            ),
+            (
+                ("key ", "value "),
+                make_ansi_key_value("key", "=\"value \""),
+            ),
+            (("lev\"el", "info"), make_ansi_key_value("level", "=info")),
+            (
+                ("ke\ny", "valu\ne"),
+                make_ansi_key_value("key", "=\"valu\\ne\""),
+            ),
+        ];
+
+        for ((k, v), expected_output) in tests {
+            let mut output = String::new();
+            let mut s = Serializer::new(&mut output);
+            assert!(s.serialize_entry(k, v).is_ok());
+            assert_eq!(output, expected_output,);
+        }
+
+        fn make_ansi_key_value(key: &str, value: &str) -> String {
+            let mut key = nu_ansi_term::Color::Rgb(109, 139, 140)
+                .bold()
+                .paint(key)
+                .to_string();
+            key.push_str(value);
+            key
+        }
+    }
+
+    #[test]
+    #[cfg(not(feature = "ansi_logs"))]
     fn test_serialize_key() {
         let tests = vec![
             ("key", "key"),

@@ -11,7 +11,11 @@ keywords = ["logging", "tracing"]
 readme = "README.md"
 
 [dependencies]
-time = { version = "0.3.7", features = ["formatting"]}
+nu-ansi-term = { version = "0.49", optional = true }
+time = { version = "0.3.7", features = ["formatting"] }
 tracing = "0.1"
 tracing-core = "0.1"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
+
+[features]
+ansi_logs = ["dep:nu-ansi-term"]

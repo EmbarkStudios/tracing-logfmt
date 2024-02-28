@@ -53,6 +53,14 @@ impl Builder {
         self.events.with_span_path = enable;
         self
     }
+    pub fn with_location(mut self, enable: bool) -> Self {
+        self.events.with_location = enable;
+        self
+    }
+    pub fn with_module_path(mut self, enable: bool) -> Self {
+        self.events.with_module_path = enable;
+        self
+    }
 
     pub fn layer<S>(self) -> Layer<S, FieldsFormatter, EventsFormatter>
     where

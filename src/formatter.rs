@@ -39,6 +39,8 @@ pub struct EventsFormatter {
     pub(crate) with_target: bool,
     pub(crate) with_span_name: bool,
     pub(crate) with_span_path: bool,
+    pub(crate) with_location: bool,
+    pub(crate) with_module_path: bool,
 }
 
 impl Default for EventsFormatter {
@@ -48,6 +50,8 @@ impl Default for EventsFormatter {
             with_target: true,
             with_span_name: true,
             with_span_path: true,
+            with_location: false,
+            with_module_path: false,
         }
     }
 }
@@ -117,6 +121,17 @@ where
             } else {
                 None
             };
+
+            if self.with_location {
+                if let (Some(file), Some(line)) = (metadata.file(), metadata.line()) {
+                    serializer.serialize_entry("location", &format!("{}:{}", file, line))?;
+                }
+            }
+            if self.with_module_path {
+                if let Some(module) = metadata.module_path() {
+                    serializer.serialize_entry("module_path", module)?;
+                }
+            }
 
             if let Some(span) = span {
                 if self.with_span_name {
@@ -529,6 +544,93 @@ mod tests {
         assert!(content.contains(&ts));
         assert!(content.contains(&target));
         assert!(content.contains(&message));
+    }
+
+    #[test]
+    #[cfg(all(not(feature = "ansi_logs"), windows))]
+    fn test_enable_location() {
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = builder::builder()
+            .with_location(true)
+            .subscriber_builder()
+            .with_writer(mock_writer.clone())
+            .finish();
+
+        subscriber::with_default(subscriber, || {
+            let _top = info_span!("top").entered();
+            let _middle = info_span!("middle").entered();
+            let _bottom = info_span!("bottom").entered();
+
+            tracing::info!("message");
+        });
+
+        let content = mock_writer.get_content();
+        let split = content.split(r"location=src\formatter.rs:").last().unwrap();
+        let line = &split[..3];
+        assert!(line.parse::<u32>().is_ok());
+
+        println!("{}", content);
+        assert!(content.contains(r"location=src\formatter.rs:"));
+        assert!(content.contains("info"));
+    }
+
+    #[test]
+    #[cfg(all(not(feature = "ansi_logs"), not(windows)))]
+    fn test_enable_location() {
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = builder::builder()
+            .with_location(true)
+            .subscriber_builder()
+            .with_writer(mock_writer.clone())
+            .finish();
+
+        subscriber::with_default(subscriber, || {
+            let _top = info_span!("top").entered();
+            let _middle = info_span!("middle").entered();
+            let _bottom = info_span!("bottom").entered();
+
+            tracing::info!("message");
+        });
+
+        let content = mock_writer.get_content();
+        let split = content.split("location=src/formatter.rs:").last().unwrap();
+        let line = &split[..3];
+        assert!(line.parse::<u32>().is_ok());
+
+        println!("{}", content);
+        assert!(content.contains("location=src/formatter.rs:"));
+        assert!(content.contains("info"));
+    }
+
+    #[test]
+    #[cfg(not(feature = "ansi_logs"))]
+    fn test_enable_module_path() {
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = builder::builder()
+            .with_module_path(true)
+            .subscriber_builder()
+            .with_writer(mock_writer.clone())
+            .finish();
+
+        subscriber::with_default(subscriber, || {
+            let _top = info_span!("top").entered();
+            let _middle = info_span!("middle").entered();
+            let _bottom = info_span!("bottom").entered();
+
+            tracing::info!("message");
+        });
+
+        let content = mock_writer.get_content();
+
+        println!("{}", content);
+        assert!(content.contains("module_path=tracing_logfmt::formatter::tests"));
+        assert!(content.contains("info"));
     }
 
     #[cfg(feature = "ansi_logs")]

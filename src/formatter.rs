@@ -547,7 +547,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(feature = "ansi_logs"))]
+    #[cfg(all(not(feature = "ansi_logs"), windows))]
     fn test_enable_location() {
         use tracing::subscriber;
 
@@ -567,9 +567,42 @@ mod tests {
         });
 
         let content = mock_writer.get_content();
+        let split = content.split(r"location=src\formatter.rs:").last().unwrap();
+        let line = &split[..3];
+        assert!(line.parse::<u32>().is_ok());
 
         println!("{}", content);
-        assert!(content.contains("location=src/formatter.rs:566"));
+        assert!(content.contains(r"location=src\formatter.rs:"));
+        assert!(content.contains("info"));
+    }
+
+    #[test]
+    #[cfg(all(not(feature = "ansi_logs"), not(windows)))]
+    fn test_enable_location() {
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = builder::builder()
+            .with_location(true)
+            .subscriber_builder()
+            .with_writer(mock_writer.clone())
+            .finish();
+
+        subscriber::with_default(subscriber, || {
+            let _top = info_span!("top").entered();
+            let _middle = info_span!("middle").entered();
+            let _bottom = info_span!("bottom").entered();
+
+            tracing::info!("message");
+        });
+
+        let content = mock_writer.get_content();
+        let split = content.split("location=src/formatter.rs:").last().unwrap();
+        let line = &split[..3];
+        assert!(line.parse::<u32>().is_ok());
+
+        println!("{}", content);
+        assert!(content.contains("location=src/formatter.rs:"));
         assert!(content.contains("info"));
     }
 

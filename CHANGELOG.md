@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+### Added
+- Add formatter options for location (file + line number) and module_path ([#13](https://github.com/EmbarkStudios/tracing-logfmt/pull/13))
+
 ## [0.3.3] - 2023-08-22
 ### Added
 - Added feature `ansi_logs` that when enabled will colorize the output ([#11](https://github.com/EmbarkStudios/tracing-logfmt/pull/11))
+- Reduce `tracing-subscriber` features that are enabled by default ([#12](https://github.com/EmbarkStudios/tracing-logfmt/pull/12))
 
 ## [0.3.2] - 2023-04-24
 ### Fixed

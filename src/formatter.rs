@@ -41,6 +41,9 @@ pub struct EventsFormatter {
     pub(crate) with_span_path: bool,
     pub(crate) with_location: bool,
     pub(crate) with_module_path: bool,
+    pub(crate) with_timestamp: bool,
+    #[cfg(feature = "ansi_logs")]
+    pub(crate) with_ansi_color: bool,
 }
 
 impl Default for EventsFormatter {
@@ -52,8 +55,17 @@ impl Default for EventsFormatter {
             with_span_path: true,
             with_location: false,
             with_module_path: false,
+            with_timestamp: true,
+            #[cfg(feature = "ansi_logs")]
+            with_ansi_color: default_enable_ansi_color(),
         }
     }
+}
+
+#[cfg(feature = "ansi_logs")]
+fn default_enable_ansi_color() -> bool {
+    use std::io::IsTerminal;
+    std::io::stdout().is_terminal()
 }
 
 impl<S, N> FormatEvent<S, N> for EventsFormatter
@@ -67,19 +79,25 @@ where
         mut writer: format::Writer<'_>,
         event: &Event<'_>,
     ) -> fmt::Result {
-        let mut serializer = Serializer::new(&mut writer);
+        let mut serializer = Serializer::new(
+            &mut writer,
+            #[cfg(feature = "ansi_logs")]
+            self.with_ansi_color,
+        );
 
         let mut visit = || {
             let metadata = event.metadata();
 
-            serializer.serialize_key("ts")?;
-            serializer.writer.write_char('=')?;
-            time::OffsetDateTime::now_utc()
-                .format_into(
-                    &mut serializer,
-                    &time::format_description::well_known::Rfc3339,
-                )
-                .map_err(|_e| fmt::Error)?;
+            if self.with_timestamp {
+                serializer.serialize_key("ts")?;
+                serializer.writer.write_char('=')?;
+                time::OffsetDateTime::now_utc()
+                    .format_into(
+                        &mut serializer,
+                        &time::format_description::well_known::Rfc3339,
+                    )
+                    .map_err(|_e| fmt::Error)?;
+            }
 
             if self.with_level {
                 let level = match *metadata.level() {
@@ -92,17 +110,21 @@ where
 
                 #[cfg(feature = "ansi_logs")]
                 {
-                    let level_str = match *metadata.level() {
-                        tracing::Level::ERROR => nu_ansi_term::Color::Red,
-                        tracing::Level::WARN => nu_ansi_term::Color::Yellow,
-                        tracing::Level::INFO => nu_ansi_term::Color::Green,
-                        tracing::Level::DEBUG => nu_ansi_term::Color::Blue,
-                        tracing::Level::TRACE => nu_ansi_term::Color::Purple,
-                    }
-                    .bold()
-                    .paint(level);
+                    if self.with_ansi_color {
+                        let level_str = match *metadata.level() {
+                            tracing::Level::ERROR => nu_ansi_term::Color::Red,
+                            tracing::Level::WARN => nu_ansi_term::Color::Yellow,
+                            tracing::Level::INFO => nu_ansi_term::Color::Green,
+                            tracing::Level::DEBUG => nu_ansi_term::Color::Blue,
+                            tracing::Level::TRACE => nu_ansi_term::Color::Purple,
+                        }
+                        .bold()
+                        .paint(level);
 
-                    serializer.serialize_entry("level", &level_str.to_string())?;
+                        serializer.serialize_entry("level", &level_str.to_string())?;
+                    } else {
+                        serializer.serialize_entry("level", level)?;
+                    }
                 }
 
                 #[cfg(not(feature = "ansi_logs"))]
@@ -160,7 +182,11 @@ where
                         }
 
                         let mut span_path = String::with_capacity(required_capacity);
-                        let s = Serializer::new(&mut span_path);
+                        let s = Serializer::new(
+                            &mut span_path,
+                            #[cfg(feature = "ansi_logs")]
+                            self.with_ansi_color,
+                        );
                         let mut insert_sep = false;
                         for span in span.scope().from_root() {
                             if insert_sep {
@@ -222,7 +248,11 @@ impl<'writer> FormatFields<'writer> for FieldsFormatter {
         mut writer: format::Writer<'writer>,
         fields: R,
     ) -> fmt::Result {
-        let mut serializer = Serializer::new(&mut writer);
+        let mut serializer = Serializer::new(
+            &mut writer,
+            #[cfg(feature = "ansi_logs")]
+            false,
+        );
         let mut visitor = Visitor::new(&mut serializer);
         fields.record(&mut visitor);
         Ok(())
@@ -450,6 +480,33 @@ mod tests {
         assert!(!content.contains("span_path="));
         assert!(content.contains("level=info"));
         assert!(content.contains("ts=20"));
+    }
+
+    #[test]
+    #[cfg(feature = "ansi_logs")]
+    fn test_disable_ansi_color() {
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = builder::builder()
+            // disable timestamp so it can be asserted
+            .with_timestamp(false)
+            .with_ansi_color(false)
+            .subscriber_builder()
+            .with_writer(mock_writer.clone())
+            .finish();
+
+        subscriber::with_default(subscriber, || {
+            tracing::info!("message");
+        });
+
+        let content = mock_writer.get_content();
+
+        // assert that ther is no ansi color sequences
+        assert_eq!(
+            content,
+            "level=info target=tracing_logfmt::formatter::tests message=message\n"
+        );
     }
 
     #[test]

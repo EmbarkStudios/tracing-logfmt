@@ -61,6 +61,15 @@ impl Builder {
         self.events.with_module_path = enable;
         self
     }
+    pub fn with_timestamp(mut self, enable: bool) -> Self {
+        self.events.with_timestamp = enable;
+        self
+    }
+    #[cfg(feature = "ansi_logs")]
+    pub fn with_ansi_color(mut self, enable: bool) -> Self {
+        self.events.with_ansi_color = enable;
+        self
+    }
 
     pub fn layer<S>(self) -> Layer<S, FieldsFormatter, EventsFormatter>
     where

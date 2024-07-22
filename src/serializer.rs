@@ -16,6 +16,8 @@ impl From<std::fmt::Error> for SerializerError {
 pub(crate) struct Serializer<W> {
     pub(crate) writer: W,
     writing_first_entry: bool,
+    #[cfg(feature = "ansi_logs")]
+    with_ansi_color: bool,
 }
 
 impl<W> Serializer<W>
@@ -23,10 +25,12 @@ where
     W: fmt::Write,
 {
     #[inline]
-    pub(crate) fn new(writer: W) -> Self {
+    pub(crate) fn new(writer: W, #[cfg(feature = "ansi_logs")] with_ansi_color: bool) -> Self {
         Serializer {
             writer,
             writing_first_entry: true,
+            #[cfg(feature = "ansi_logs")]
+            with_ansi_color,
         }
     }
 
@@ -98,16 +102,22 @@ where
 
         #[cfg(feature = "ansi_logs")]
         {
-            let mut s = String::new();
-            for c in chars {
-                s.push(c);
+            if self.with_ansi_color {
+                let mut s = String::new();
+                for c in chars {
+                    s.push(c);
+                }
+                self.writer.write_str(
+                    &nu_ansi_term::Color::Rgb(109, 139, 140)
+                        .bold()
+                        .paint(s)
+                        .to_string(),
+                )?;
+            } else {
+                for c in chars {
+                    self.writer.write_char(c)?;
+                }
             }
-            self.writer.write_str(
-                &nu_ansi_term::Color::Rgb(109, 139, 140)
-                    .bold()
-                    .paint(s)
-                    .to_string(),
-            )?;
         }
         Ok(())
     }
@@ -215,7 +225,7 @@ mod tests {
 
         for ((k, v), expected_output) in tests {
             let mut output = String::new();
-            let mut s = Serializer::new(&mut output);
+            let mut s = Serializer::new(&mut output, true);
             assert!(s.serialize_entry(k, v).is_ok());
             assert_eq!(output, expected_output,);
         }
@@ -261,7 +271,11 @@ mod tests {
 
         for (input, expected_error) in tests {
             let mut output = String::new();
+
+            #[cfg(not(feature = "ansi_logs"))]
             let mut s = Serializer::new(&mut output);
+            #[cfg(feature = "ansi_logs")]
+            let mut s = Serializer::new(&mut output, true);
             assert_eq!(s.serialize_key(input), Err(expected_error));
         }
     }
@@ -286,7 +300,12 @@ mod tests {
 
         for (input, expected_output) in tests {
             let mut output = String::new();
+
+            #[cfg(not(feature = "ansi_logs"))]
             let mut s = Serializer::new(&mut output);
+            #[cfg(feature = "ansi_logs")]
+            let mut s = Serializer::new(&mut output, true);
+
             assert!(s.serialize_value(input).is_ok());
 
             assert_eq!(output, expected_output);

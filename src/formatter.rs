@@ -502,7 +502,7 @@ mod tests {
 
         let content = mock_writer.get_content();
 
-        // assert that ther is no ansi color sequences
+        // assert that there is no ansi color sequences
         assert_eq!(
             content,
             "level=info target=tracing_logfmt::formatter::tests message=message\n"

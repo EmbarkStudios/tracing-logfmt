@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+### Added
+- Add support for disabling ansi color when the feature is enabled ([#16](https://github.com/EmbarkStudios/tracing-logfmt/pull/16))
+
 ## [0.3.4] - 2024-03-01
 ### Added
 - Add formatter options for location (file + line number) and module_path ([#13](https://github.com/EmbarkStudios/tracing-logfmt/pull/13))

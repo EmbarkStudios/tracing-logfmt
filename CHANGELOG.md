@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+## [0.3.5] - 2024-08-05
 ### Added
 - Add support for disabling ansi color when the feature is enabled ([#16](https://github.com/EmbarkStudios/tracing-logfmt/pull/16))
 
@@ -53,7 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial implementation of a logfmt formatter for tracing-subscriber
 
 <!-- next-url -->
-[Unreleased]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.3.4...HEAD
+[Unreleased]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.3.5...HEAD
+[0.3.5]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.3.4...0.3.5
 [0.3.4]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.3.3...0.3.4
 [0.3.3]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.3.2...0.3.3
 [0.3.2]: https://github.com/EmbarkStudios/tracing-logfmt/compare/0.3.1...0.3.2

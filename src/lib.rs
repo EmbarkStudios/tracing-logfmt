@@ -20,3 +20,4 @@ mod serializer;
 
 pub use crate::formatter::builder::{builder, Builder};
 pub use crate::formatter::{layer, EventsFormatter, FieldsFormatter};
+pub use tracing_subscriber::fmt::format::FmtSpan;

@@ -42,6 +42,8 @@ pub struct EventsFormatter {
     pub(crate) with_location: bool,
     pub(crate) with_module_path: bool,
     pub(crate) with_timestamp: bool,
+    pub(crate) with_thread_names: bool,
+    pub(crate) with_thread_ids: bool,
     #[cfg(feature = "ansi_logs")]
     pub(crate) with_ansi_color: bool,
 }
@@ -56,6 +58,8 @@ impl Default for EventsFormatter {
             with_location: false,
             with_module_path: false,
             with_timestamp: true,
+            with_thread_names: false,
+            with_thread_ids: false,
             #[cfg(feature = "ansi_logs")]
             with_ansi_color: default_enable_ansi_color(),
         }
@@ -133,6 +137,29 @@ where
 
             if self.with_target {
                 serializer.serialize_entry("target", metadata.target())?;
+            }
+
+            // Use same logic as tracing-subscriber for thread names and ids
+            // https://github.com/tokio-rs/tracing/blob/efc690fa6bd1d9c3a57528b9bc8ac80504a7a6ed/tracing-subscriber/src/fmt/format/json.rs#L306
+            if self.with_thread_names {
+                let current_thread = std::thread::current();
+                match current_thread.name() {
+                    Some(name) => {
+                        serializer.serialize_entry("thread.name", name)?;
+                    }
+                    // fall-back to thread id when name is absent and ids are not enabled
+                    None if !self.with_thread_ids => {
+                        serializer.serialize_entry(
+                            "thread.name",
+                            &format!("{:?}", current_thread.id()),
+                        )?;
+                    }
+                    _ => {}
+                }
+            }
+
+            if self.with_thread_ids {
+                serializer.serialize_entry_no_quote("thread.id", std::thread::current().id())?;
             }
 
             let span = if self.with_span_name || self.with_span_path {
@@ -403,6 +430,36 @@ mod tests {
 
     #[test]
     #[cfg(not(feature = "ansi_logs"))]
+    fn test_enable_thread_name_and_id() {
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = builder::builder()
+            .with_thread_names(true)
+            .with_thread_ids(true)
+            .subscriber_builder()
+            .with_writer(mock_writer.clone())
+            .finish();
+
+        std::thread::Builder::new()
+            .name("worker-1".to_string())
+            .spawn(move || {
+                subscriber::with_default(subscriber, || {
+                    tracing::info!("message");
+                });
+            })
+            .unwrap()
+            .join()
+            .unwrap();
+
+        let content = mock_writer.get_content();
+        println!("{:?}", content);
+        assert!(content.contains("thread.name=worker-1"));
+        assert!(content.contains("thread.id="));
+    }
+
+    #[test]
+    #[cfg(not(feature = "ansi_logs"))]
     fn test_span_and_span_path_with_quoting() {
         use tracing::subscriber;
 
@@ -507,6 +564,40 @@ mod tests {
             content,
             "level=info target=tracing_logfmt::formatter::tests message=message\n"
         );
+    }
+
+    #[test]
+    #[cfg(feature = "ansi_logs")]
+    fn test_enable_thread_name_and_id() {
+        use tracing::subscriber;
+
+        let mock_writer = MockMakeWriter::new();
+        let subscriber = builder::builder()
+            .with_thread_names(true)
+            .with_thread_ids(true)
+            .subscriber_builder()
+            .with_writer(mock_writer.clone())
+            .finish();
+
+        std::thread::Builder::new()
+            .name("worker-1".to_string())
+            .spawn(move || {
+                subscriber::with_default(subscriber, || {
+                    tracing::info!("message");
+                });
+            })
+            .unwrap()
+            .join()
+            .unwrap();
+
+        let content = mock_writer.get_content();
+
+        let thread_name_prefix = make_ansi_key_value("thread.name", "=");
+        let thread_id_prefix = make_ansi_key_value("thread.id", "=");
+
+        println!("{:?}", content);
+        assert!(content.contains(&(thread_name_prefix + "worker-1")));
+        assert!(content.contains(&thread_id_prefix));
     }
 
     #[test]

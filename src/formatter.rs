@@ -590,7 +590,7 @@ mod tests {
         let thread_id_prefix = make_ansi_key_value("thread.id", "=");
 
         println!("{:?}", content);
-        assert!(content.contains(&(thread_name_prefix + "worker-1")));
+        assert!(content.contains(&format!("{thread_name_prefix}worker-1")));
         assert!(content.contains(&thread_id_prefix));
     }
 

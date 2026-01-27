@@ -1,33 +1,18 @@
 [advisories]
-vulnerability = "deny"
-unmaintained = "warn"
-yanked = "deny"
-notice = "warn"
 ignore = []
 
 [bans]
 multiple-versions = "deny"
-deny = []
-skip = []
-skip-tree = []
 
 [sources]
 unknown-registry = "deny"
 unknown-git = "deny"
 required-git-spec = "rev"
-allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-allow-git = []
 
 [licenses]
-private = { ignore = true, registries = ["embark"] }
-unlicensed = "deny"
-allow-osi-fsf-free = "neither"
-# We want really high confidence when inferring licenses from text
-confidence-threshold = 0.92
-copyleft = "deny"
 allow = [
-    "Apache-2.0",                     # https://tldrlegal.com/license/apache-license-2.0-(apache-2.0)
-    "MIT",                            # https://tldrlegal.com/license/mit-license
-    "Unicode-DFS-2016",               # https://spdx.org/licenses/Unicode-DFS-2016.html
+    "Apache-2.0",   # https://tldrlegal.com/license/apache-license-2.0-(apache-2.0)
+    "MIT",          # https://tldrlegal.com/license/mit-license
+    "Unicode-3.0",  # https://spdx.org/licenses/Unicode-3.0.html
 ]
 exceptions = []

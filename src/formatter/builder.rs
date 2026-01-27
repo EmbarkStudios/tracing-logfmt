@@ -1,6 +1,6 @@
 use tracing::Subscriber;
 use tracing_subscriber::{
-    fmt::{Layer, SubscriberBuilder},
+    fmt::{format::FmtSpan, Layer, SubscriberBuilder},
     registry::LookupSpan,
 };
 
@@ -9,6 +9,7 @@ use crate::{EventsFormatter, FieldsFormatter};
 pub struct Builder {
     events: EventsFormatter,
     fields: FieldsFormatter,
+    span_events: FmtSpan,
 }
 
 /// Create a builder that can be used to configure the formatter.
@@ -34,6 +35,7 @@ impl Builder {
         Self {
             events: EventsFormatter::default(),
             fields: FieldsFormatter::default(),
+            span_events: FmtSpan::NONE,
         }
     }
 
@@ -51,6 +53,10 @@ impl Builder {
     }
     pub fn with_span_path(mut self, enable: bool) -> Self {
         self.events.with_span_path = enable;
+        self
+    }
+    pub fn with_span_events(mut self, kind: FmtSpan) -> Self {
+        self.span_events = kind;
         self
     }
     pub fn with_location(mut self, enable: bool) -> Self {
@@ -76,12 +82,14 @@ impl Builder {
         S: Subscriber + for<'a> LookupSpan<'a>,
     {
         tracing_subscriber::fmt::layer()
+            .with_span_events(self.span_events)
             .event_format(self.events)
             .fmt_fields(self.fields)
     }
 
     pub fn subscriber_builder(self) -> SubscriberBuilder<FieldsFormatter, EventsFormatter> {
         tracing_subscriber::fmt::Subscriber::builder()
+            .with_span_events(self.span_events)
             .event_format(self.events)
             .fmt_fields(self.fields)
     }

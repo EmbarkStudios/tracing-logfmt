@@ -157,9 +157,7 @@ where
 {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         if let Ok(buf) = std::str::from_utf8(buf) {
-            self.writer
-                .write_str(buf)
-                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+            self.writer.write_str(buf).map_err(std::io::Error::other)?;
         }
         Ok(buf.len())
     }

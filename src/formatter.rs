@@ -143,23 +143,17 @@ where
             // https://github.com/tokio-rs/tracing/blob/efc690fa6bd1d9c3a57528b9bc8ac80504a7a6ed/tracing-subscriber/src/fmt/format/json.rs#L306
             if self.with_thread_names {
                 let current_thread = std::thread::current();
-                match current_thread.name() {
-                    Some(name) => {
-                        serializer.serialize_entry("thread.name", name)?;
-                    }
+                if let Some(name) = current_thread.name() {
+                    serializer.serialize_entry("thread.name", name)?;
+                } else if !self.with_thread_ids {
                     // fall-back to thread id when name is absent and ids are not enabled
-                    None if !self.with_thread_ids => {
-                        serializer.serialize_entry(
-                            "thread.name",
-                            &format!("{:?}", current_thread.id()),
-                        )?;
-                    }
-                    _ => {}
+                    serializer
+                        .serialize_entry("thread_name", &format!("{:?}", current_thread.id()))?;
                 }
             }
 
             if self.with_thread_ids {
-                serializer.serialize_entry_no_quote("thread.id", std::thread::current().id())?;
+                serializer.serialize_entry_no_quote("thread_id", std::thread::current().id())?;
             }
 
             let span = if self.with_span_name || self.with_span_path {

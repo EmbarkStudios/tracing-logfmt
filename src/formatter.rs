@@ -418,6 +418,7 @@ mod tests {
     };
 
     use tracing::info_span;
+    #[allow(unused_imports)]
     use tracing_subscriber::fmt::{MakeWriter, SubscriberBuilder};
 
     use super::*;
@@ -468,10 +469,6 @@ mod tests {
         }
     }
 
-    fn subscriber() -> SubscriberBuilder<FieldsFormatter, EventsFormatter> {
-        builder::builder().subscriber_builder()
-    }
-
     macro_rules! contains {
         ($content:expr, [$($item:expr),+$(,)?], [$($neg:expr),*$(,)?]) => {
             eprintln!("{}", $content);
@@ -489,6 +486,10 @@ mod tests {
     #[cfg(not(feature = "ansi_logs"))]
     mod no_ansi {
         use super::*;
+
+        fn subscriber() -> SubscriberBuilder<FieldsFormatter, EventsFormatter> {
+            builder::builder().subscriber_builder()
+        }
 
         #[test]
         fn enable_thread_name_and_id() {
@@ -697,13 +698,19 @@ mod tests {
             key
         }
 
+        // We use this since locally you'll default to true for ansi colors, but
+        // CI will get auto-detected as not a terminal, disabling colors and failing tests
+        fn builder() -> builder::Builder {
+            builder::builder().with_ansi_color(true)
+        }
+
         #[test]
         fn disable_span_and_span_path() {
             use nu_ansi_term::Color;
             use tracing::subscriber;
 
             let mock_writer = MockMakeWriter::new();
-            let subscriber = builder::builder()
+            let subscriber = builder()
                 .with_span_name(false)
                 .with_span_path(false)
                 .subscriber_builder()
@@ -740,7 +747,10 @@ mod tests {
             use tracing::subscriber;
 
             let mock_writer = MockMakeWriter::new();
-            let subscriber = subscriber().with_writer(mock_writer.clone()).finish();
+            let subscriber = builder()
+                .subscriber_builder()
+                .with_writer(mock_writer.clone())
+                .finish();
 
             subscriber::with_default(subscriber, || {
                 let _top = info_span!("top").entered();
@@ -764,7 +774,10 @@ mod tests {
             use tracing::subscriber;
 
             let mock_writer = MockMakeWriter::new();
-            let subscriber = subscriber().with_writer(mock_writer.clone()).finish();
+            let subscriber = builder()
+                .subscriber_builder()
+                .with_writer(mock_writer.clone())
+                .finish();
 
             subscriber::with_default(subscriber, || {
                 let _top = info_span!("top").entered();
@@ -789,7 +802,7 @@ mod tests {
             use tracing::subscriber;
 
             let mock_writer = MockMakeWriter::new();
-            let subscriber = builder::builder()
+            let subscriber = builder()
                 .with_thread_names(true)
                 .with_thread_ids(true)
                 .subscriber_builder()
@@ -824,7 +837,7 @@ mod tests {
             use tracing::subscriber;
 
             let mock_writer = MockMakeWriter::new();
-            let subscriber = builder::builder()
+            let subscriber = builder()
                 // disable timestamp so it can be asserted
                 .with_timestamp(false)
                 .with_ansi_color(false)

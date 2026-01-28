@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+### Added
+- [PR#17](https://github.com/EmbarkStudios/tracing-logfmt/pull/17) added support for [span events](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/fmt/struct.Layer.html#method.with_span_events).
+- [PR#18](https://github.com/EmbarkStudios/tracing-logfmt/pull/18) added support for emitting thread names (if the thread was assigned one) and/or thread ids. Note that this current implementation emits the OS assigned thread id, not the [`std::thread::ThreadId`](https://doc.rust-lang.org/std/thread/struct.ThreadId.html), unlike eg. `tokio-tracing`.
+
+### Changed
+- [PR#19](https://github.com/EmbarkStudios/tracing-logfmt/pull/19) added the lockfile to the repository, updated the lints to 1.93.0, and updated the deny configuration.
+
 ## [0.3.5] - 2024-08-05
 ### Added
 - Add support for disabling ansi color when the feature is enabled ([#16](https://github.com/EmbarkStudios/tracing-logfmt/pull/16))

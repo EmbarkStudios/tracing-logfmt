@@ -40,12 +40,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo fetch
       - name: cargo test build
-        # Note the use of release here means longer compile time, but much
-        # faster test execution time. If you don't have any heavy tests it
-        # might be faster to take off release and just compile in debug
-        run: cargo build --tests --release
+        run: cargo build --tests
       - name: cargo test
-        run: cargo test --release
+        run: cargo test
+      - name: cargo test build ansi
+        run: cargo build --tests --features ansi_logs
+      - name: cargo test ansi
+        run: cargo test --features ansi_logs
 
   deny-check:
     name: cargo-deny

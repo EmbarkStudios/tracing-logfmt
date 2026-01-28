@@ -71,6 +71,16 @@ impl Builder {
         self.events.with_timestamp = enable;
         self
     }
+
+    pub fn with_thread_names(mut self, enable: bool) -> Self {
+        self.events.with_thread_names = enable;
+        self
+    }
+
+    pub fn with_thread_ids(mut self, enable: bool) -> Self {
+        self.events.with_thread_ids = enable;
+        self
+    }
     #[cfg(feature = "ansi_logs")]
     pub fn with_ansi_color(mut self, enable: bool) -> Self {
         self.events.with_ansi_color = enable;

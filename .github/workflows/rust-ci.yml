@@ -43,10 +43,10 @@ jobs:
         run: cargo build --tests
       - name: cargo test
         run: cargo test
-      - name: cargo test build
-        run: cargo build --tests --features ansi_log
-      - name: cargo test
-        run: cargo test --features ansi_log
+      - name: cargo test build ansi
+        run: cargo build --tests --features ansi_logs
+      - name: cargo test ansi
+        run: cargo test --features ansi_logs
 
   deny-check:
     name: cargo-deny

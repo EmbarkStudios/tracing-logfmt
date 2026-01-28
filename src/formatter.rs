@@ -92,7 +92,7 @@ fn current_thread_id() -> u64 {
             safe fn gettid() -> i32;
         }
 
-        return gettid() as _;
+        gettid() as _
     }
 
     #[cfg(target_os = "windows")]
@@ -102,7 +102,7 @@ fn current_thread_id() -> u64 {
             safe fn GetCurrentThreadId() -> u32;
         }
 
-        return GetCurrentThreadId() as _;
+        GetCurrentThreadId() as _
     }
 
     #[cfg(target_vendor = "apple")]
@@ -119,7 +119,7 @@ fn current_thread_id() -> u64 {
             id = 0;
         }
 
-        return id;
+        id
     }
 }
 

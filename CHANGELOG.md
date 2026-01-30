@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+### Fixed
+- [PR#21](https://github.com/EmbarkStudios/tracing-logfmt/pull/21) resolved [#20](https://github.com/EmbarkStudios/tracing-logfmt/issues/20) by returning 0 on unsupported platforms.
+
 ## [0.3.6] - 2026-01-28
 ### Added
 - [PR#17](https://github.com/EmbarkStudios/tracing-logfmt/pull/17) added support for [span events](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/fmt/struct.Layer.html#method.with_span_events).

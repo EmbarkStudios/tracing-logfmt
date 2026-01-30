@@ -74,9 +74,8 @@ fn default_enable_ansi_color() -> bool {
 
 /// Gets the current thread id as an integer
 ///
-/// This only supports the normal platforms here, I doubt this crate has wide usage,
-/// we just hard compile fail if targeting a platform we don't implement so
-/// that it is obvious
+/// This only supports the normal platforms here (Linux, Windows, Apple).
+/// For anything else like WASM we just return 0.
 ///
 /// Note that a Rust `ThreadId` is actually just a process specific atomic,
 /// completely unrelated to the thread id assigned by the operating system, but
@@ -120,6 +119,15 @@ fn current_thread_id() -> u64 {
         }
 
         id
+    }
+
+    #[cfg(not(any(
+        any(target_os = "linux", target_os = "android"),
+        target_os = "windows",
+        target_vendor = "apple"
+    )))]
+    {
+        0
     }
 }
 

@@ -77,6 +77,9 @@ impl Builder {
         self
     }
 
+    /// Enable emitting the thread id in log output.
+    ///
+    /// Note: On unsupported targets like WASM, the thread id will be `0`.
     pub fn with_thread_ids(mut self, enable: bool) -> Self {
         self.events.with_thread_ids = enable;
         self

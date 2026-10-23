@@ -10,6 +10,7 @@ use tracing_subscriber::fmt::{FmtContext, FormattedFields};
 use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::Layer;
 
+use crate::os;
 use crate::serializer::{Serializer, SerializerError};
 
 /// Creates a formatting layer
@@ -70,65 +71,6 @@ impl Default for EventsFormatter {
 fn default_enable_ansi_color() -> bool {
     use std::io::IsTerminal;
     std::io::stdout().is_terminal()
-}
-
-/// Gets the current thread id as an integer
-///
-/// This only supports the normal platforms here (Linux, Windows, Apple).
-/// For anything else like WASM we just return 0.
-///
-/// Note that a Rust `ThreadId` is actually just a process specific atomic,
-/// completely unrelated to the thread id assigned by the operating system, but
-/// we use the operating system one, at least until they stabilize
-/// <https://doc.rust-lang.org/std/thread/struct.ThreadId.html#method.as_u64>
-#[inline]
-#[allow(unsafe_code)]
-fn current_thread_id() -> u64 {
-    #[cfg(any(target_os = "linux", target_os = "android"))]
-    {
-        #[link(name = "c")]
-        unsafe extern "C" {
-            safe fn gettid() -> i32;
-        }
-
-        gettid() as _
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        #[link(name = "kernel32", kind = "raw-dylib")]
-        unsafe extern "system" {
-            safe fn GetCurrentThreadId() -> u32;
-        }
-
-        GetCurrentThreadId() as _
-    }
-
-    #[cfg(target_vendor = "apple")]
-    {
-        #[link(name = "c")]
-        unsafe extern "C" {
-            // technically isn't safe since it accepts a pointer, but we only
-            // have a single use that keeps the pointee on the stack
-            safe fn pthread_threadid_np(thread: usize, id: *mut u64) -> i32;
-        }
-
-        let mut id = 0;
-        if pthread_threadid_np(0, &mut id) != 0 {
-            id = 0;
-        }
-
-        id
-    }
-
-    #[cfg(not(any(
-        any(target_os = "linux", target_os = "android"),
-        target_os = "windows",
-        target_vendor = "apple"
-    )))]
-    {
-        0
-    }
 }
 
 impl<S, N> FormatEvent<S, N> for EventsFormatter
@@ -205,13 +147,15 @@ where
                     serializer.serialize_entry("thread_name", name)?;
                 } else if !self.with_thread_ids {
                     // fall-back to thread id when name is absent and ids are not enabled
-                    serializer
-                        .serialize_entry("thread_name", &format!("{}", current_thread_id()))?;
+                    serializer.serialize_entry(
+                        "thread_name",
+                        &format!("{}", os::gettid().unwrap_or(0)),
+                    )?;
                 }
             }
 
             if self.with_thread_ids {
-                serializer.serialize_entry_no_quote("thread_id", current_thread_id())?;
+                serializer.serialize_entry_no_quote("thread_id", os::gettid().unwrap_or(0))?;
             }
 
             let span = if self.with_span_name || self.with_span_path {

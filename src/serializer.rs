@@ -125,7 +125,7 @@ where
     pub(crate) fn serialize_value(&mut self, value: &str) -> Result<(), SerializerError> {
         if value.chars().any(need_quote) {
             self.writer.write_char('"')?;
-            write!(self.writer, "{}", value.escape_debug())?;
+            self.writer.write_str(&escape8259::escape_str(value))?;
             self.writer.write_char('"')?;
         } else {
             self.writer.write_str(value)?;
@@ -289,9 +289,10 @@ mod tests {
             (r#"""#, r#""\"""#),
             (r#"\""#, r#""\\\"""#),
             ("\n", r#""\n""#),
-            ("\x00", r#""\0""#),
-            ("\x10", r#""\u{10}""#),
-            ("\x1F", r#""\u{1f}""#),
+            ("\x00", r#""\u0000""#),
+            ("\x10", r#""\u0010""#),
+            ("\x1F", r#""\u001f""#),
+            ("couldn't open", r#""couldn't open""#),
             ("µ", r#"µ"#),
             ("åäö", r#"åäö"#),
         ];

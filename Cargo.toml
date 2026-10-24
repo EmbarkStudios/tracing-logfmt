@@ -11,6 +11,7 @@ keywords = ["logging", "tracing"]
 readme = "README.md"
 
 [dependencies]
+escape8259 = "0.5"
 nu-ansi-term = { version = "0.50", optional = true }
 time = { version = "0.3.7", features = ["formatting"] }
 tracing = "0.1"

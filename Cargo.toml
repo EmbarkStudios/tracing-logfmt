@@ -15,7 +15,13 @@ nu-ansi-term = { version = "0.50", optional = true }
 time = { version = "0.3.7", features = ["formatting"] }
 tracing = "0.1"
 tracing-core = "0.1"
+tracing-log = { version = "0.2", default-features = false, optional = true }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
 
+[dev-dependencies]
+tracing-log = "0.2"
+
 [features]
+default = ["tracing-log"]
 ansi_logs = ["dep:nu-ansi-term"]
+tracing-log = ["dep:tracing-log"]

@@ -4,6 +4,8 @@ use std::fmt::{self, Write};
 
 use tracing::field::Visit;
 use tracing_core::{Event, Field, Subscriber};
+#[cfg(feature = "tracing-log")]
+use tracing_log::NormalizeEvent;
 use tracing_subscriber::field::RecordFields;
 use tracing_subscriber::fmt::format::{self, FormatEvent, FormatFields};
 use tracing_subscriber::fmt::{FmtContext, FormattedFields};
@@ -149,6 +151,13 @@ where
         );
 
         let mut visit = || {
+            #[cfg(feature = "tracing-log")]
+            let normalized_metadata = event.normalized_metadata();
+            #[cfg(feature = "tracing-log")]
+            let metadata = normalized_metadata
+                .as_ref()
+                .unwrap_or_else(|| event.metadata());
+            #[cfg(not(feature = "tracing-log"))]
             let metadata = event.metadata();
 
             if self.with_timestamp {
@@ -352,6 +361,13 @@ impl<'a, W> Visitor<'a, W> {
             debug_fmt_buffer: String::new(),
         }
     }
+
+    /// Whether to write `field`.
+    #[inline]
+    fn should_record(&self, field: &Field) -> bool {
+        let log_metadata = cfg!(feature = "tracing-log") && field.name().starts_with("log.");
+        self.state.is_ok() && !log_metadata
+    }
 }
 
 impl<'a, W> Visit for Visitor<'a, W>
@@ -359,43 +375,43 @@ where
     W: fmt::Write,
 {
     fn record_f64(&mut self, field: &Field, value: f64) {
-        if self.state.is_ok() {
+        if self.should_record(field) {
             self.record_debug_no_quote(field, value);
         }
     }
 
     fn record_i64(&mut self, field: &Field, value: i64) {
-        if self.state.is_ok() {
+        if self.should_record(field) {
             self.record_debug_no_quote(field, value);
         }
     }
 
     fn record_u64(&mut self, field: &Field, value: u64) {
-        if self.state.is_ok() {
+        if self.should_record(field) {
             self.record_debug_no_quote(field, value);
         }
     }
 
     fn record_bool(&mut self, field: &Field, value: bool) {
-        if self.state.is_ok() {
+        if self.should_record(field) {
             self.record_debug_no_quote(field, value);
         }
     }
 
     fn record_str(&mut self, field: &Field, value: &str) {
-        if self.state.is_ok() {
+        if self.should_record(field) {
             self.state = self.serializer.serialize_entry(field.name(), value);
         }
     }
 
     fn record_error(&mut self, field: &Field, value: &(dyn std::error::Error + 'static)) {
-        if self.state.is_ok() {
+        if self.should_record(field) {
             self.record_debug(field, &format_args!("{}", value));
         }
     }
 
     fn record_debug(&mut self, field: &Field, value: &dyn fmt::Debug) {
-        if self.state.is_ok() {
+        if self.should_record(field) {
             self.debug_fmt_buffer.clear();
             let _ = write!(self.debug_fmt_buffer, "{:?}", value);
             self.state = self
@@ -692,6 +708,46 @@ mod tests {
             assert!(line.parse::<u32>().is_ok());
 
             contains!(content, [r"location=src\formatter.rs:", "info"], []);
+        }
+
+        #[test]
+        #[cfg(feature = "tracing-log")]
+        fn log_records_are_written_with_their_own_metadata() {
+            use tracing::subscriber;
+            use tracing_log::log;
+
+            let mock_writer = MockMakeWriter::new();
+            let subscriber = builder::builder()
+                .with_location(true)
+                .with_module_path(true)
+                .subscriber_builder()
+                .with_writer(mock_writer.clone())
+                .finish();
+
+            subscriber::with_default(subscriber, || {
+                let record = log::Record::builder()
+                    .args(format_args!("compacting segment 7"))
+                    .level(log::Level::Info)
+                    .target("fjall::tree")
+                    .file(Some("src/tree.rs"))
+                    .line(Some(144))
+                    .module_path(Some("fjall::tree"))
+                    .build();
+                tracing_log::format_trace(&record).unwrap();
+            });
+
+            let content = mock_writer.get_content();
+
+            contains!(
+                content,
+                [
+                    " target=fjall::tree ",
+                    " location=src/tree.rs:144 ",
+                    " module_path=fjall::tree ",
+                    " message=\"compacting segment 7\""
+                ],
+                [" target=log ", "log."]
+            );
         }
     }
 
